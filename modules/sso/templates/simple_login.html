@@ -1,0 +1,31 @@
+{{ define "title" }}Авторизация{{ end }}
+
+{{ define "content" }}
+    <div class="form--title">{{template "title" .}}</div>
+    <div class="field">
+        <label for="username">Введите имя пользователя</label>
+        <input id="username" type="text"/>
+    </div>
+    <div class="field">
+        <label for="password">Введите пароль</label>
+        <input id="password" type="password"/>
+    </div>
+
+    <div class="button--container">
+        <button id="login--button" type="submit">Войти</button>
+    </div>
+{{ end }}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ template "title" .}}</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+<form action="http://localhost:8080/login" method="post" class="form">
+    {{template "content" .}}
+</form>
+</body>
+</html>
