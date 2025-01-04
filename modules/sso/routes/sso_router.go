@@ -7,5 +7,8 @@ import (
 
 func RegisterSsoRoutes(router *gin.Engine) {
 
-	router.POST("/login", controller.HandleLoginRequest)
+	router.POST("/login", controller.Login)
+	router.POST("/register", controller.Register)
+	router.GET("/token", controller.Token)
+	router.GET("/authInfo", controller.AuthInfo)
 }
