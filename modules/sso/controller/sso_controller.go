@@ -39,7 +39,7 @@ func Login(c *gin.Context) {
 	}
 	code := utils.GenerateAuthCode()
 	authCodes[code] = requestBody.Username
-	c.Redirect(http.StatusPermanentRedirect, fmt.Sprintf("%s?code=%s", redirectUri, code))
+	c.Redirect(http.StatusPermanentRedirect, redirectUri+"?code="+code)
 }
 
 func Register(c *gin.Context) {
