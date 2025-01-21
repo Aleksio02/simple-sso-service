@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	_ "github.com/mattn/go-sqlite3"
 	"simple-sso-service/modules/sso/model"
 )
 
@@ -33,16 +34,10 @@ func (ur SQLiteUserRepository) GetUserByUsername(username string) (model.User, e
 }
 
 func CreateSQLiteUserRepository() SQLiteUserRepository {
-	// TODO: aleksioi: проверить название драйвера
-	//go get github.com/mattn/go-sqlite3
-	//
-	// TODO: aleksioi: вставить строку подключения
-	// имя файла .db
-	// TODO: aleksioi: придумать способ доставки данных для подключения
-	//db, err := sql.Open("sqlite3", "")
-	//if err != nil {
-	//	panic(err)
-	//}
-	//return SQLiteUserRepository{db: db, context: context.Background()}
-	return SQLiteUserRepository{}
+	db, err := sql.Open("sqlite3", "db/sso/sso.db")
+
+	if err != nil {
+		panic(err)
+	}
+	return SQLiteUserRepository{db: db, context: context.Background()}
 }

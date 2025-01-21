@@ -21,7 +21,6 @@ var userService = service.CreateUserService(repository.CreateSQLiteUserRepositor
 var authCodes = map[string]string{}
 
 func Login(c *gin.Context) {
-	// TODO: implement me
 	url, _ := url.ParseQuery(c.Request.URL.RawQuery)
 	redirectUri := url["redirect_uri"][0]
 
@@ -87,7 +86,6 @@ func Token(c *gin.Context) {
 }
 
 func AuthInfo(c *gin.Context) {
-	// TODO: implement me
 	tokenString := c.GetHeader("Authorization")
 	if len(tokenString) == 0 {
 		c.JSON(http.StatusBadRequest, "Invalid token")
