@@ -1,16 +1,14 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"net/url"
 	"simple-sso-service/modules/sso/model"
 	"simple-sso-service/modules/sso/repository"
 	"simple-sso-service/modules/sso/service"
 	"simple-sso-service/modules/sso/utils"
-	"strings"
+	"strconv"
 )
 
 // TODO: вынести объявление в другое место
@@ -27,13 +25,13 @@ func Login(c *gin.Context) {
 	requestBody := model.AuthRequest{}
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err)
+		c.JSON(http.StatusBadRequest, getErrorObject(strconv.Itoa(http.StatusBadRequest), "Ошибка чтения объекта из тела запроса"))
 		return
 	}
 
 	err = userService.Login(requestBody)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err)
+		c.JSON(http.StatusBadRequest, getErrorObject(strconv.Itoa(http.StatusBadRequest), "Неверное имя пользователя или пароль"))
 		return
 	}
 	code := utils.GenerateAuthCode()
@@ -57,7 +55,7 @@ func Register(c *gin.Context) {
 
 	err = userService.Register(requestBody)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, "Пользователь с таким именем уже существует")
+		c.JSON(http.StatusBadRequest, getErrorObject(strconv.Itoa(http.StatusBadRequest), "Пользователь с таким именем уже существует"))
 		return
 	}
 
@@ -70,38 +68,37 @@ func Token(c *gin.Context) {
 	code := url["code"][0]
 	if username, exists := authCodes[code]; exists {
 		delete(authCodes, code)
-		payload := jwt.MapClaims{
-			"username": username,
-		}
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
-		signedToken, _ := token.SignedString(JWT_SECRET)
+		signedToken := userService.CreateTokenForUsername(username, JWT_SECRET)
 		c.JSON(http.StatusOK, map[string]string{
 			"token": signedToken,
 		})
 		return
 	}
-	c.JSON(http.StatusBadRequest, "Invalid code")
+	c.JSON(http.StatusBadRequest, getErrorObject(strconv.Itoa(http.StatusBadRequest), "Некорректный авторизационный код"))
 }
 
 func AuthInfo(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if len(tokenString) == 0 {
-		c.JSON(http.StatusBadRequest, "Invalid token")
+		c.JSON(http.StatusBadRequest, getErrorObject(strconv.Itoa(http.StatusBadRequest), "Отсутствует токен"))
 		return
 	}
 
-	token := strings.Split(tokenString, " ")[1]
+	claims, err := userService.ParseToken(tokenString, JWT_SECRET)
 
-	claims := jwt.MapClaims{}
+	if err != nil {
+		c.JSON(http.StatusBadRequest, getErrorObject(strconv.Itoa(http.StatusBadRequest), "Ошибка чтения токена"))
+		return
+	}
 
-	jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-		// Убедимся, что метод подписи соответствует ожиданиям
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return JWT_SECRET, nil
-	})
 	c.JSON(http.StatusOK, map[string]interface{}{
 		"username": claims["username"],
 	})
+}
+
+func getErrorObject(code string, message string) map[string]interface{} {
+	return map[string]interface{}{
+		"code":    code,
+		"message": message,
+	}
 }
