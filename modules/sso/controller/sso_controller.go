@@ -51,19 +51,17 @@ func Register(c *gin.Context) {
 	}
 
 	type responseBodyStruct struct {
-		code        int
-		redirectUri string
+		Code        int    `json:"code"`
+		RedirectUri string `json:"redirectUri"`
 	}
 
 	err = userService.Register(requestBody)
 	if err != nil {
-		// TODO: aleksioi: выкинуть внятную ошибку
-		c.JSON(http.StatusInternalServerError, nil)
+		c.JSON(http.StatusBadRequest, "Пользователь с таким именем уже существует")
 		return
 	}
 
-	responseBody := responseBodyStruct{code: 302, redirectUri: "uri to login form page"}
-
+	responseBody := responseBodyStruct{Code: 200, RedirectUri: "uri to login form page"}
 	c.JSON(http.StatusOK, responseBody)
 }
 

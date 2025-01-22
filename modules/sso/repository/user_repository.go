@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	_ "github.com/mattn/go-sqlite3"
 	"simple-sso-service/modules/sso/model"
 )
@@ -18,19 +19,21 @@ type SQLiteUserRepository struct {
 }
 
 func (ur SQLiteUserRepository) SaveUser(username string, password string, role string) error {
-	_, err := ur.db.ExecContext(ur.context, "INSERT INTO USER(username, password, role) VALUES($1, $2, $3)", username, password, role)
+	_, err := ur.db.Exec("INSERT INTO USER(username, password, role) VALUES(?, ?, ?)", username, password, role)
 	return err
 }
 
 func (ur SQLiteUserRepository) GetUserByUsername(username string) (model.User, error) {
-	// TODO: implement me
-	//var result model.User
-	//_, err := ur.db.QueryRow("SELECT id, username, password, role FROM USER WHERE username = $1", username)
-	//return err
-	//panic("Not implemented")
+	var result model.User
+	row, _ := ur.db.Query("SELECT id, username, password, role FROM USER WHERE username = ?", username)
+	defer row.Close()
 
-	return model.User{AuthRequest: model.AuthRequest{Username: "supervisor", Password: "supervisor"}, Role: "USER", Id: 1}, nil
+	if row.Next() {
+		row.Scan(&result.Id, &result.Username, &result.Password, &result.Role)
+		return result, nil
+	}
 
+	return model.User{}, errors.New("user not found")
 }
 
 func CreateSQLiteUserRepository() SQLiteUserRepository {
